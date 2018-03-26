@@ -158,7 +158,7 @@ MIDDLEWARE_CLASSES = [
     'desktop.middleware.NotificationMiddleware',
     'desktop.middleware.ExceptionMiddleware',
     'desktop.middleware.ClusterMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware'
+    #'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
 
     'django.middleware.http.ConditionalGetMiddleware',
@@ -201,6 +201,9 @@ INSTALLED_APPS = [
 
     # App that keeps track of failed logins.
     'axes',
+
+    # App that display various debug information about the current request/response
+    # 'debug_toolbar',
 ]
 
 LOCALE_PATHS = [
@@ -528,3 +531,50 @@ if not desktop.conf.DATABASE_LOGGING.get():
 #
 # For performance reasons and to avoid searching in huge fields, we also truncate to a max length
 DOCUMENT2_SEARCH_MAX_LENGTH = 2000
+
+DEBUG_TOOLBAR_PATCH_SETTINGS = False
+
+def show_toolbar(request):
+    # Here can be used for
+    #   limit IP address by checking request.META['REMOTE_ADDR'], which can avoid setting INTERNAL_IPS
+    #   limit users by checking (request.user and request.user.username == 'username')
+    return DEBUG
+
+if DEBUG:
+   idx = MIDDLEWARE_CLASSES.index('desktop.middleware.ClusterMiddleware')
+   MIDDLEWARE_CLASSES.insert(idx + 1, 'debug_panel.middleware.DebugPanelMiddleware')
+
+   INSTALLED_APPS += (
+       'debug_toolbar',
+       'debug_panel',
+   )
+
+   DEBUG_TOOLBAR_PANELS = [
+       'debug_toolbar.panels.versions.VersionsPanel',
+       'debug_toolbar.panels.timer.TimerPanel',
+       'debug_toolbar.panels.settings.SettingsPanel',
+       'debug_toolbar.panels.headers.HeadersPanel',
+       'debug_toolbar.panels.request.RequestPanel',
+       'debug_toolbar.panels.sql.SQLPanel',
+       'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+       'debug_toolbar.panels.templates.TemplatesPanel',
+       'debug_toolbar.panels.cache.CachePanel',
+       'debug_toolbar.panels.signals.SignalsPanel',
+       'debug_toolbar.panels.logging.LoggingPanel',
+       'debug_toolbar.panels.redirects.RedirectsPanel',
+   ]
+
+   DEBUG_TOOLBAR_CONFIG = {
+       'RESULTS_CACHE_SIZE': 150,
+       'SHOW_TOOLBAR_CALLBACK': show_toolbar
+   }
+
+   CACHES.update({
+       'debug-panel': {
+           'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+           'LOCATION': '/var/tmp/debug-panel-cache',
+           'OPTIONS': {
+               'MAX_ENTRIES': 10000
+           }
+       }
+   })
