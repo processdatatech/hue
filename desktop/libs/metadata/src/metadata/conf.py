@@ -65,13 +65,6 @@ def has_navigator(user):
       and (user.is_superuser or user.has_hue_permission(action="access", app=DJANGO_APPS[0]))
 
 
-def has_kafka():
-  return KAFKA.IS_ENABLED.get()
-
-def has_kafka_api():
-  return bool(KAFKA.API_URL.get())
-
-
 def get_security_default():
   '''Get default security value from Hadoop'''
   from hadoop import cluster # Avoid dependencies conflicts
@@ -395,24 +388,6 @@ MANAGER = ConfigSection(
       type=coerce_bool,
       default=False
     )
-  )
-)
-
-
-KAFKA = ConfigSection(
-  key='kafka',
-  help=_t("""Configuration options for Kafka management"""),
-  members=dict(
-    IS_ENABLED = Config(
-      key="is_enabled",
-      help=_t("Enable the Kafka integration."),
-      type=coerce_bool,
-      default=False
-    ),
-    API_URL=Config(
-      key='api_url',
-      help=_t('Base URL of Kafka REST API.'),
-      default=None),
   )
 )
 
